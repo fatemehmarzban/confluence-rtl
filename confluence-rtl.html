@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direction Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .editor-container {
+            border: 2px solid #ccc;
+            padding: 10px;
+            min-height: 200px;
+            width: 80%;
+            background: #f9f9f9;
+        }
+
+        p, li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Test Auto Direction Script</h2>
+    <h3>تست است</h3>
+    <!--<p>Type in the editor below. The text direction should change dynamically!</p>-->
+
+    <div id="main-content" class="editor-container" contenteditable="true">
+        <p>Start typing here...</p>
+        <ul>
+            <li>تست 1</li>
+            <li>تست 2</li>
+            <li>Test 3</li>
+        </ul>
+        <p>یا این یک مثال دیگر است</p>
+        <ol>
+            <li>Test 1</li>
+            <li>تست 2</li>
+            <li>تست 3</li>
+            <li>Test 4</li>
+        </ol>
+    </div>
+
+    <script>
+        function isPersianChar(char) {
+            var persianRegex = /[\u0600-\u06FF\u0750-\u077F]/;
+            return persianRegex.test(char);
+        }
+
+        function setStyle(element, style) {
+            var targetElement = element;
+            if (!targetElement) {
+                return;
+            }
+            while (targetElement && getComputedStyle(targetElement).display === 'inline') {
+                targetElement = targetElement.parentElement;
+            }
+            if (targetElement) {
+                targetElement.setAttribute("style", style);
+                if (targetElement.nodeName === "LI" && (targetElement.parentElement.nodeName === "UL" || targetElement.parentElement.nodeName === "OL")) {
+                    targetElement.parentElement.setAttribute("style", "padding-inline-end: 40px; direction: rtl; text-align: right;");
+                }
+            }
+        }
+
+        function setDirection(rootElement) {
+
+            if (!rootElement) {
+                return;
+            }
+            // console.log("---------- setDirection called for " + rootElement.nodeName);
+            var textElements = rootElement.querySelectorAll(":not(:empty)");
+
+            if (!textElements.length) {
+                // console.log(rootElement.nodeName + " has no children.");
+                return;
+                // setStyle(rootElement, "direction:rtl; text-align:right;");
+            }
+
+            textElements.forEach(textElement => {
+                if (textElement.nodeType === Node.ELEMENT_NODE && textElement.nodeName !== "SCRIPT") {
+                    textElement.childNodes.forEach(child => {
+                        if (child.nodeType === 3) { // Text Node
+                            var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
+                            if (firstChar && isPersianChar(firstChar)) {
+                                setStyle(textElement, "direction:rtl; text-align:right;");
+                            }
+                        }
+                    });
+                }
+            });
+
+            var tables = rootElement.querySelectorAll("table");
+            tables.forEach((table) => {
+                var firstTh = table.querySelector("th:first-child");
+                if (firstTh) {
+                    var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
+                    if (firstChar && isPersianChar(firstChar[0])) {
+                        table.setAttribute("style", "direction:rtl; margin-left:auto");
+                    }
+                }
+            });
+        }
+
+        function handleIframe(iframe) {
+            iframe.addEventListener("load", function () {
+                var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+                var iframeBody = iframeDocument.querySelector("body");
+
+                if (!iframeDocument || !iframeBody) {
+                    return;
+                }
+
+                // Apply styles initially
+                setDirection(iframeBody);
+
+                // Observe changes inside iframe body
+                const iframeObserver = new MutationObserver(mutations => {
+                    mutations.forEach(mutation => {
+                        // console.log("---------- Mutation Type: " + mutation.type);
+                        // console.log("---------- Mutation Target: " + mutation.target.nodeName);
+                        if (mutation.type === "characterData") {
+                            // console.log("Character data changed in:", mutation.target);
+                            var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
+                            if (firstChar && isPersianChar(firstChar[0])) {
+                                setStyle(mutation.target.parentElement, "direction:rtl; text-align:right;");
+                            }
+                            
+                        }
+                        /*if (mutation.type === "childList") {
+                            console.log("---------- Added Nodes: ");
+                            console.log(mutation.addedNodes);
+                            mutation.addedNodes.forEach(node => {
+                                if (node.nodeType === 1) { // Element
+                                    console.log("---------- Element " + node.nodeName + " added.");
+                                    setDirection(node);
+                                }
+                            });
+                        }*/
+                    });
+                });
+
+                iframeObserver.observe(iframeBody, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                });
+
+            });
+        }
+
+        // Observe DOM changes to detect edit mode and added iframe
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeName === "IFRAME") {
+                        handleIframe(node);
+                    }
+                });
+            });
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        var pageContent = document.querySelector("div#content");
+        console.log("---------- Page Content:");
+        console.log(pageContent);
+
+        window.onload = function () {
+            setTimeout(() => setDirection(document), 700);
+            setDirection(document);
+        };
+
+    </script>
+
+</body>
+</html>
