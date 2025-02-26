@@ -171,12 +171,10 @@
         });
 
         var pageContent = document.querySelector("div#content");
-        console.log("---------- Page Content:");
-        console.log(pageContent);
 
         window.onload = function () {
-            setTimeout(() => setDirection(document), 700);
-            setDirection(document);
+            setTimeout(() => setDirection(pageContent), 700);
+            setDirection(pageContent);
         };
 
     </script>
