@@ -52,17 +52,39 @@
         }
 
         function setStyle(element, style) {
+            // console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
+            
             var targetElement = element;
+            var parentDirection = getComputedStyle(targetElement.parentElement).direction;
+            // var paddingInline = parentDirection == "rtl" ? "padding-inline-start: 40px;" : "padding-inline-end: 40px";
+            const rtlStyle = "direction:rtl; text-align:right;";
+            const ltrStyle = "direction:ltr; text-align:left;";
+            // const liStyle = "direction:inherit; text-align:inherit; " + paddingInline;
+            const liStyle = "direction:inherit; text-align:inherit; padding-inline-end: 40px;";
+            const olRtlStyle = "direction:rtl; text-align:right; padding-inline-end: 40px;";
+            
             if (!targetElement) {
                 return;
             }
             while (targetElement && getComputedStyle(targetElement).display === 'inline') {
                 targetElement = targetElement.parentElement;
             }
-            if (targetElement) {
-                targetElement.setAttribute("style", style);
-                if (targetElement.nodeName === "LI" && (targetElement.parentElement.nodeName === "UL" || targetElement.parentElement.nodeName === "OL")) {
-                    targetElement.parentElement.setAttribute("style", "padding-inline-end: 40px; direction: rtl; text-align: right;");
+            if (targetElement && targetElement.nodeName !== "LI") {
+                // console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
+                targetElement.setAttribute("style", style == "rtl" ? rtlStyle : ltrStyle);
+
+            } else if (targetElement.nodeName === "LI" && (targetElement.parentElement.nodeName === "UL" || targetElement.parentElement.nodeName === "OL")) {
+
+                // console.log("---------- targetElement is " + targetElement.nodeName);
+                // console.log("---------- parent is " + targetElement.parentElement.nodeName + " and direction is " + parentDirection);
+
+                if (style === "rtl") {
+                    // console.log("---------- Setting style rtl for the element and its parent");
+                    targetElement.setAttribute("style", liStyle);
+                    targetElement.parentElement.setAttribute("style", olRtlStyle);
+                } else if (style === "ltr") {
+                    // console.log("---------- Setting style ltr just for the element");
+                    targetElement.setAttribute("style",  liStyle);
                 }
             }
         }
@@ -78,7 +100,7 @@
             if (!textElements.length) {
                 // console.log(rootElement.nodeName + " has no children.");
                 return;
-                // setStyle(rootElement, "direction:rtl; text-align:right;");
+                // setStyle(rootElement, "rtl");
             }
 
             textElements.forEach(textElement => {
@@ -87,7 +109,9 @@
                         if (child.nodeType === 3) { // Text Node
                             var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             if (firstChar && isPersianChar(firstChar)) {
-                                setStyle(textElement, "direction:rtl; text-align:right;");
+                                setStyle(textElement, "rtl");
+                            } else {
+                                setStyle(textElement, "ltr");
                             }
                         }
                     });
@@ -101,6 +125,8 @@
                     var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                     if (firstChar && isPersianChar(firstChar[0])) {
                         table.setAttribute("style", "direction:rtl; margin-left:auto");
+                    } else {
+                        table.setAttribute("style", "direction:ltr;");
                     }
                 }
             });
@@ -127,20 +153,12 @@
                             // console.log("Character data changed in:", mutation.target);
                             var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             if (firstChar && isPersianChar(firstChar[0])) {
-                                setStyle(mutation.target.parentElement, "direction:rtl; text-align:right;");
+                                setStyle(mutation.target.parentElement, "rtl");
+                            } else {
+                                setStyle(mutation.target.parentElement, "ltr");
                             }
                             
                         }
-                        /*if (mutation.type === "childList") {
-                            console.log("---------- Added Nodes: ");
-                            console.log(mutation.addedNodes);
-                            mutation.addedNodes.forEach(node => {
-                                if (node.nodeType === 1) { // Element
-                                    console.log("---------- Element " + node.nodeName + " added.");
-                                    setDirection(node);
-                                }
-                            });
-                        }*/
                     });
                 });
 
@@ -158,6 +176,7 @@
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeName === "IFRAME") {
+                        // console.log("---------- IFRAME Found!");
                         handleIframe(node);
                     }
                 });
