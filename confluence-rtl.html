@@ -46,6 +46,9 @@
     </div>
 
     <script>
+
+        const tagIgnore = new Set(["CODE", "SCRIPT", "PRE"]);
+
         function containsPersianChars(char) {
             var persianRegex = /[\u0600-\u06FF\u0750-\u077F]/;
             return persianRegex.test(char);
@@ -55,17 +58,18 @@
             // console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
             
             var targetElement = element;
-            var parentDirection = getComputedStyle(targetElement.parentElement).direction;
-            // var paddingInline = parentDirection == "rtl" ? "padding-inline-start: 40px;" : "padding-inline-end: 40px";
-            const rtlStyle = "direction:rtl; text-align:right;";
-            const ltrStyle = "direction:ltr; text-align:left;";
-            // const liStyle = "direction:inherit; text-align:inherit; " + paddingInline;
-            const liStyle = "direction:inherit; text-align:inherit; padding-inline-end: 40px;";
-            const olRtlStyle = "direction:rtl; text-align:right; padding-inline-end: 40px;";
-            
+
             if (!targetElement) {
                 return;
             }
+
+            var parentDirection = getComputedStyle(targetElement?.parentElement)?.direction;
+            
+            const rtlStyle = "direction:rtl; text-align:right;";
+            const ltrStyle = "direction:ltr; text-align:left;";
+            const liStyle = "direction:inherit; text-align:inherit; padding-inline-end: 40px;";
+            const olRtlStyle = "direction:rtl; text-align:right; padding-inline-end: 40px;";
+            
             while (targetElement && getComputedStyle(targetElement).display === 'inline') {
                 targetElement = targetElement.parentElement;
             }
@@ -104,6 +108,15 @@
             }
 
             textElements.forEach(textElement => {
+
+                if (tagIgnore.has(textElement.nodeName)) {
+                    // console.log("--------- Ignoring tag " + textElement.nodeName);
+                    return;
+                }
+                if (textElement.getAttribute("class")?.includes("code")) {
+                    // console.log("--------- Code table in textElements loop. Skipping");
+                    return; // This is a code block and skip it
+                }
                 if (textElement.nodeType === Node.ELEMENT_NODE && textElement.nodeName !== "SCRIPT") {
                     textElement.childNodes.forEach(child => {
                         if (child.nodeType === 3) { // Text Node
@@ -121,6 +134,14 @@
 
             var tables = rootElement.querySelectorAll("table");
             tables.forEach((table) => {
+                if (table.getAttribute("data-macro-name") !== "code") {
+                    // console.log("--------- Code data-macro-name in table loop. Skipping");
+                    return; // Skip this table
+                }
+                if (table.querySelector("td.code")) {
+                    // console.log("--------- Code table in tables loop. Skipping");
+                    return; // Skip this table
+                }
                 var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
                     var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
@@ -149,6 +170,11 @@
                 // Observe changes inside iframe body
                 const iframeObserver = new MutationObserver(mutations => {
                     mutations.forEach(mutation => {
+                        // console.log("---------- Mutation on " + mutation.target.nodeName + " with parent " + mutation.target.parentElement.nodeName);
+                        if (tagIgnore.has(mutation.target.parentElement?.nodeName)) {
+                            // console.log("---------- Ignoring." + mutation.target.nodeName);
+                            return; // Ignore mutations on specified tags
+                        }
                         // console.log("---------- Mutation Type: " + mutation.type);
                         // console.log("---------- Mutation Target: " + mutation.target.nodeName);
                         if (mutation.type === "characterData") {
