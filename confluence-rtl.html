@@ -46,7 +46,7 @@
     </div>
 
     <script>
-        function isPersianChar(char) {
+        function containsPersianChars(char) {
             var persianRegex = /[\u0600-\u06FF\u0750-\u077F]/;
             return persianRegex.test(char);
         }
@@ -108,7 +108,8 @@
                     textElement.childNodes.forEach(child => {
                         if (child.nodeType === 3) { // Text Node
                             var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
-                            if (firstChar && isPersianChar(firstChar)) {
+                            // if (firstChar && containsPersianChars(firstChar)) {
+                            if (firstChar && containsPersianChars(child.nodeValue.trim())) {
                                 setStyle(textElement, "rtl");
                             } else {
                                 setStyle(textElement, "ltr");
@@ -123,7 +124,8 @@
                 var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
                     var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
-                    if (firstChar && isPersianChar(firstChar[0])) {
+                    // if (firstChar && containsPersianChars(firstChar[0])) {
+                    if (firstChar && containsPersianChars(firstTh.textContent.trim())) {
                         table.setAttribute("style", "direction:rtl; margin-left:auto");
                     } else {
                         table.setAttribute("style", "direction:ltr;");
@@ -152,7 +154,8 @@
                         if (mutation.type === "characterData") {
                             // console.log("Character data changed in:", mutation.target);
                             var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
-                            if (firstChar && isPersianChar(firstChar[0])) {
+                            // if (firstChar && containsPersianChars(firstChar[0])) {
+                            if (firstChar && containsPersianChars(mutation.target.textContent.trim())) {
                                 setStyle(mutation.target.parentElement, "rtl");
                             } else {
                                 setStyle(mutation.target.parentElement, "ltr");
