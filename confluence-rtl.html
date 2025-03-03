@@ -72,17 +72,17 @@
             var targetElement = element;
 
             if (!targetElement) {
-                console.log("---------- Returning!");
+                // console.log("---------- Returning!");
                 return;
             }
 
-            console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
+            // console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
 
             // console.log("---------- Element is " + element.nodeName + " and style is: " + style);
-            console.log(element);
+            // console.log(element);
 
             if (inlineElements.has(element.nodeName)) {
-                console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
+                // console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
                 targetElement.style.setProperty("direction", style);
                 targetElement.style.setProperty("display", "inline-block");
 
@@ -99,10 +99,10 @@
 
             var targetElementDisplay = getComputedStyle(targetElement)?.display;
 
-            console.log("---------- display: " + targetElementDisplay);
+            // console.log("---------- display: " + targetElementDisplay);
 
-            console.log("---------- Parent: ");
-            console.log(targetElement.parentElement);
+            // console.log("---------- Parent: ");
+            // console.log(targetElement.parentElement);
 
             targetElement = findFirstNonInlineParent(targetElement);
 
@@ -114,16 +114,16 @@
                 // console.log(targetElement);
                 // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
             }*/
-            console.log("---------- Final Parent: ");
-            console.log(targetElement);
-            console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
+            // console.log("---------- Final Parent: ");
+            // console.log(targetElement);
+            // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
 
             if (targetElement && targetElement?.nodeName !== "LI") {
-                console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
+                // console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
 
                 if (targetElement.parentElement.nodeName === "LI") {
                     // It still might be a list child.
-                    console.log("---------- Setting direction to inherit");
+                    // console.log("---------- Setting direction to inherit");
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -132,10 +132,10 @@
                 }
 
                 if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr") {
-                    console.log("---------- not setting anything!");
+                    // console.log("---------- not setting anything!");
                     return; 
                 } else /*if (getComputedStyle(targetElement)?.direction === "ltr" && style === "ltr")*/ {
-                    console.log("---------- Setting " + style);
+                    // console.log("---------- Setting " + style);
                     targetElement.style.setProperty("direction", style);
                     targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left"); 
                 }
@@ -145,7 +145,7 @@
                 // console.log("---------- parent is " + targetElement.parentElement.nodeName + " and direction is " + getComputedStyle(targetElement?.parentElement)?.direction);
 
                 if (style === "rtl") {
-                    console.log("---------- Setting style rtl for the element and its parent");
+                    // console.log("---------- Setting style rtl for the element and its parent");
                     
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
@@ -155,7 +155,7 @@
                     targetElement.parentElement.style.setProperty("text-align", "right");
                     targetElement.parentElement.style.setProperty("padding-inline-end", "40px");
                 } else if (style === "ltr") {
-                    console.log("---------- Setting style ltr just for the element");
+                    // console.log("---------- Setting style ltr just for the element");
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -189,8 +189,8 @@
                 if (textElement.nodeType === Node.ELEMENT_NODE) {
                     textElement.childNodes.forEach(child => {
                         if (child.nodeType === 3) { // Text Node
-                            console.log("---------- Checking:");
-                            console.log(child);
+                            // console.log("---------- Checking:");
+                            // console.log(child);
                             var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             // console.log(firstChar);
                             // if (firstChar && containsPersianChars(firstChar)) {
@@ -233,6 +233,8 @@
                 }
                 var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
+                    // console.log("---------- First TH:");
+                    // console.log(firstTh);
                     var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
 
                     // if (firstChar && containsPersianChars(firstChar[0])) {
