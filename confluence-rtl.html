@@ -56,48 +56,81 @@
             return persianRegex.test(char);
         }
 
+        function findFirstNonInlineParent (element) {
+            // Returns the element itself if the element display is not inline or inline-block
+            var display = getComputedStyle(element)?.display;
+            var parent = element;
+            while (parent && (display === 'inline' || display === 'inline-block')) {
+                parent = parent.parentElement;
+                display = getComputedStyle(parent)?.display
+            }
+            return parent;
+        }
+
         function setStyle(element, style) {
-            // console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
+            console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
 
             // console.log("---------- Element is " + element.nodeName + " and style is: " + style);
-            // console.log(element);
+            console.log(element);
             
             var targetElement = element;
 
             if (!targetElement) {
+                console.log("---------- Returning!");
                 return;
             }
 
-            var parentDirection = getComputedStyle(targetElement?.parentElement)?.direction;
-
             if (inlineElements.has(element.nodeName)) {
-                // console.log("---------- Element is " + element.nodeName + " and style is: " + style);
+                console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
                 targetElement.style.setProperty("direction", style);
                 targetElement.style.setProperty("display", "inline-block");
 
                 if (style === "rtl") {
-                    targetElement.parentElement?.style.setProperty("direction", "rtl");
-                    targetElement.parentElement?.style.setProperty("text-align", "right");
+                    var parent = findFirstNonInlineParent(targetElement);
+                    parent?.style.setProperty("direction", "rtl");
+                    parent?.style.setProperty("text-align", "right");
                 }
 
                 return;
             }
 
-            while (targetElement && getComputedStyle(targetElement).display === 'inline') {
+            var targetElementDisplay = getComputedStyle(targetElement)?.display;
+
+            console.log("---------- display: " + targetElementDisplay);
+
+            console.log("---------- Parent: ");
+            console.log(targetElement.parentElement);
+
+            while (targetElement && (targetElementDisplay === 'inline' || targetElementDisplay === 'inline-block')) {
                 targetElement = targetElement.parentElement;
+                targetElementDisplay = getComputedStyle(targetElement)?.display
+
+                // console.log("---------- New Parent: ");
+                // console.log(targetElement);
+                // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
             }
-            if (targetElement && targetElement.nodeName !== "LI") {
-                // console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
-                targetElement.style.setProperty("direction", style);
-                targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left");
+            console.log("---------- Final Parent: ");
+            console.log(targetElement);
+            console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
 
-            } else if ((targetElement.nodeName === "LI" && listElements.has(targetElement.parentElement.nodeName))) {
+            if (targetElement && targetElement?.nodeName !== "LI") {
+                console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
 
-                // console.log("---------- targetElement is " + targetElement.nodeName);
-                // console.log("---------- parent is " + targetElement.parentElement.nodeName + " and direction is " + parentDirection);
+                if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr") {
+                    console.log("---------- not setting anything!");
+                    return; 
+                } else /*if (getComputedStyle(targetElement)?.direction === "ltr" && style === "ltr")*/ {
+                    console.log("---------- Setting " + style);
+                    targetElement.style.setProperty("direction", style);
+                    targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left"); 
+                }
+
+            } else if (targetElement && targetElement.nodeName === "LI" && listElements.has(targetElement.parentElement.nodeName)) {
+
+                // console.log("---------- parent is " + targetElement.parentElement.nodeName + " and direction is " + getComputedStyle(targetElement?.parentElement)?.direction);
 
                 if (style === "rtl") {
-                    // console.log("---------- Setting style rtl for the element and its parent");
+                    console.log("---------- Setting style rtl for the element and its parent");
                     
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
@@ -107,7 +140,7 @@
                     targetElement.parentElement.style.setProperty("text-align", "right");
                     targetElement.parentElement.style.setProperty("padding-inline-end", "40px");
                 } else if (style === "ltr") {
-                    // console.log("---------- Setting style ltr just for the element");
+                    console.log("---------- Setting style ltr just for the element");
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -141,8 +174,8 @@
                 if (textElement.nodeType === Node.ELEMENT_NODE) {
                     textElement.childNodes.forEach(child => {
                         if (child.nodeType === 3) { // Text Node
-                            // console.log("---------- Checking:");
-                            // console.log(child);
+                            console.log("---------- Checking:");
+                            console.log(child);
                             var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             // console.log(firstChar);
                             // if (firstChar && containsPersianChars(firstChar)) {
