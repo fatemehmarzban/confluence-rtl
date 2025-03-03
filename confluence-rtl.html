@@ -223,7 +223,9 @@
 
             var tables = rootElement.querySelectorAll("table");
             tables.forEach((table) => {
-                if (table.getAttribute("data-macro-name") !== "code") {
+                // console.log("---------- Table:");
+                // console.log(table);
+                if (table.getAttribute("data-macro-name") === "code") {
                     // console.log("--------- Code data-macro-name in table loop. Skipping");
                     return; // Skip this table
                 }
@@ -231,10 +233,27 @@
                     // console.log("--------- Code table in tables loop. Skipping");
                     return; // Skip this table
                 }
-                var firstTh = table.querySelector("th:first-child");
+                var persianDetected = false;
+                table.querySelectorAll("*").forEach(child => {
+                    if (persianDetected) {
+                        return;
+                    }
+                    // console.log("---------- Table Child:");
+                    // console.log(child);
+                    child.childNodes.forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE && containsPersianChars(node.nodeValue.trim())) {
+                            // console.log("---------- Table has Persian characters.");
+                            setStyle(table.parentElement, "rtl");
+                            persianDetected = true;
+                            return;
+                        }
+                    });
+                });
+                
+                /*var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
-                    // console.log("---------- First TH:");
-                    // console.log(firstTh);
+                    console.log("---------- First TH:");
+                    console.log(firstTh);
                     var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
 
                     // if (firstChar && containsPersianChars(firstChar[0])) {
@@ -244,7 +263,7 @@
                     } else {
                         table.style.setProperty("direction", "ltr");
                     }
-                }
+                }*/
             });
         }
 
