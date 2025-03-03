@@ -323,6 +323,17 @@
             });
         });
 
+        function setDirectionForComments() {
+            var comments = document.querySelectorAll(".comment-content");
+            // console.log("---------- Comment-Bodies:");
+            // console.log(comments);
+            comments.forEach(comment => {
+                comment.childNodes.forEach(child => {
+                    setDirection(comment);
+                });
+            });
+        }
+
         // Start observing
         observer.observe(document.body, {
             childList: true,
@@ -334,6 +345,7 @@
         window.onload = function () {
             setTimeout(() => setDirection(pageContent), 700);
             setDirection(pageContent);
+            setDirectionForComments();
         };
 
     </script>
