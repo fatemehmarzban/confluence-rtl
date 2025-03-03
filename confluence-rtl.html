@@ -341,9 +341,11 @@
         });
 
         var pageContent = document.querySelector("div#main-content");
+        var pageTitle = document.querySelector("#title-text");
 
         window.onload = function () {
             setTimeout(() => setDirection(pageContent), 700);
+            setDirection(pageTitle);
             setDirection(pageContent);
             setDirectionForComments();
         };
