@@ -67,7 +67,7 @@
             return parent;
         }
 
-        function setStyle(element, style) {
+        function setStyle(element, style, force = false) {
             
             var targetElement = element;
 
@@ -76,13 +76,18 @@
                 return;
             }
 
-            // console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
+            console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
 
             // console.log("---------- Element is " + element.nodeName + " and style is: " + style);
-            // console.log(element);
+            console.log(element);
+
+            if (element.getAttribute("data-mce-style")) {
+                console.log("data-mce-style FOUND!");
+                element.removeAttribute("data-mce-style");
+            }
 
             if (inlineElements.has(element.nodeName)) {
-                // console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
+                console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
                 targetElement.style.setProperty("direction", style);
                 targetElement.style.setProperty("display", "inline-block");
 
@@ -114,16 +119,16 @@
                 // console.log(targetElement);
                 // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
             }*/
-            // console.log("---------- Final Parent: ");
-            // console.log(targetElement);
+            console.log("---------- Final Parent: ");
+            console.log(targetElement);
             // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
 
             if (targetElement && targetElement?.nodeName !== "LI") {
-                // console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
+                console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
 
                 if (targetElement.parentElement.nodeName === "LI") {
                     // It still might be a list child.
-                    // console.log("---------- Setting direction to inherit");
+                    console.log("---------- Setting direction to inherit");
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -131,11 +136,11 @@
                     return;
                 }
 
-                if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr") {
-                    // console.log("---------- not setting anything!");
+                if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr" && !force) {
+                    console.log("---------- not setting anything!");
                     return; 
                 } else /*if (getComputedStyle(targetElement)?.direction === "ltr" && style === "ltr")*/ {
-                    // console.log("---------- Setting " + style);
+                    console.log("---------- Setting " + style);
                     targetElement.style.setProperty("direction", style);
                     targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left"); 
                 }
@@ -181,6 +186,10 @@
                 if (tagIgnore.has(textElement.nodeName)) {
                     // console.log("--------- Ignoring tag " + textElement.nodeName);
                     return;
+                }
+                if (textElement.getAttribute("data-macro-name") === "code") {
+                    // console.log("--------- Code data-macro-name in table loop. Skipping");
+                    return; // Skip this table
                 }
                 if (textElement.getAttribute("class")?.includes("code")) {
                     // console.log("--------- Code table in textElements loop. Skipping");
@@ -234,7 +243,7 @@
                     return; // Skip this table
                 }
                 var persianDetected = false;
-                table.querySelectorAll("*").forEach(child => {
+                /*table.querySelectorAll("*").forEach(child => {
                     if (persianDetected) {
                         return;
                     }
@@ -248,7 +257,7 @@
                             return;
                         }
                     });
-                });
+                });*/
                 
                 /*var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
@@ -293,12 +302,16 @@
                             // console.log("Character data changed in:", mutation.target);
                             var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             if (firstChar && containsPersianChars(mutation.target.textContent.trim())) {
-                                setStyle(mutation.target.parentElement, "rtl");
+                                setStyle(mutation.target.parentElement, "rtl", true);
                             } else {
-                                setStyle(mutation.target.parentElement, "ltr");
+                                setStyle(mutation.target.parentElement, "ltr", true);
                             }
                             
                         }
+                        /*if (mutation.type === "childList") {
+                            mutation.target.parentElement.style.removeProperty("direction");
+                            mutation.target.parentElement.style.removeProperty("text-align");
+                        }*/
                     });
                 });
 
@@ -316,7 +329,7 @@
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeName === "IFRAME") {
-                        // console.log("---------- IFRAME Found!");
+                        console.log("---------- IFRAME Found!");
                         handleIframe(node);
                     }
                 });
@@ -324,13 +337,16 @@
         });
 
         function setDirectionForComments() {
-            var comments = document.querySelectorAll(".comment-content");
-            // console.log("---------- Comment-Bodies:");
-            // console.log(comments);
-            comments.forEach(comment => {
-                comment.childNodes.forEach(child => {
-                    setDirection(comment);
-                });
+            var commentContents = document.querySelectorAll(".comment-content");
+            commentContents.forEach(element => {
+                // console.log("---------- Element:");
+                // console.log(element);
+                setDirection(element);
+                /*element.childNodes.forEach(child => {
+                    console.log("---------- Element child:");
+                    console.log(child);
+                    setDirection(child);
+                });*/
             });
         }
 
