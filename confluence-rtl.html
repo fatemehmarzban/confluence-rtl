@@ -242,22 +242,26 @@
                     // console.log("--------- Code table in tables loop. Skipping");
                     return; // Skip this table
                 }
-                var persianDetected = false;
-                /*table.querySelectorAll("*").forEach(child => {
-                    if (persianDetected) {
-                        return;
-                    }
-                    // console.log("---------- Table Child:");
-                    // console.log(child);
-                    child.childNodes.forEach(node => {
-                        if (node.nodeType === Node.TEXT_NODE && containsPersianChars(node.nodeValue.trim())) {
-                            // console.log("---------- Table has Persian characters.");
-                            setStyle(table.parentElement, "rtl");
-                            persianDetected = true;
+
+                // If the table has a table-wrap div around it
+                if (table.parentElement && table.parentElement.classList.contains("table-wrap")) {
+                    var persianDetected = false;
+                    table.querySelectorAll("*").forEach(child => {
+                        if (persianDetected) {
                             return;
                         }
+                        // console.log("---------- Table Child:");
+                        // console.log(child);
+                        child.childNodes.forEach(node => {
+                            if (node.nodeType === Node.TEXT_NODE && containsPersianChars(node.nodeValue.trim())) {
+                                // console.log("---------- Table has Persian characters.");
+                                setStyle(table.parentElement, "rtl");
+                                persianDetected = true;
+                                return;
+                            }
+                        });
                     });
-                });*/
+                }
                 
                 /*var firstTh = table.querySelector("th:first-child");
                 if (firstTh) {
