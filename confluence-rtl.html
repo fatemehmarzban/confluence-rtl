@@ -27,7 +27,6 @@
 
     <h2>Test Auto Direction Script</h2>
     <h3>تست است</h3>
-    <!--<p>Type in the editor below. The text direction should change dynamically!</p>-->
 
     <div id="main-content" class="editor-container" contenteditable="true">
         <p>Start typing here...</p>
@@ -72,63 +71,33 @@
             var targetElement = element;
 
             if (!targetElement) {
-                // console.log("---------- Returning!");
                 return;
             }
 
-            console.log("---------- setStyle requested for " + element.nodeName + " with style " + style);
-
-            // console.log("---------- Element is " + element.nodeName + " and style is: " + style);
-            console.log(element);
-
             if (element.getAttribute("data-mce-style")) {
-                console.log("data-mce-style FOUND!");
+                // Remove tinemce style that interferes with our style.
                 element.removeAttribute("data-mce-style");
             }
 
+            // Set style for inline elements
             if (inlineElements.has(element.nodeName)) {
-                console.log("---------- Inline Element is " + element.nodeName + " and style is: " + style);
+
                 targetElement.style.setProperty("direction", style);
                 targetElement.style.setProperty("display", "inline-block");
 
                 setStyle(findFirstNonInlineParent(targetElement), style);
-
-                /*if (style === "rtl") {
-                    var parent = findFirstNonInlineParent(targetElement);
-                    parent?.style.setProperty("direction", "rtl");
-                    parent?.style.setProperty("text-align", "right");
-                }*/
 
                 return;
             }
 
             var targetElementDisplay = getComputedStyle(targetElement)?.display;
 
-            // console.log("---------- display: " + targetElementDisplay);
-
-            // console.log("---------- Parent: ");
-            // console.log(targetElement.parentElement);
-
             targetElement = findFirstNonInlineParent(targetElement);
 
-            /*while (targetElement && (targetElementDisplay === 'inline' || targetElementDisplay === 'inline-block')) {
-                targetElement = targetElement.parentElement;
-                targetElementDisplay = getComputedStyle(targetElement)?.display
-
-                // console.log("---------- New Parent: ");
-                // console.log(targetElement);
-                // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
-            }*/
-            console.log("---------- Final Parent: ");
-            console.log(targetElement);
-            // console.log("---------- display: " + getComputedStyle(targetElement)?.display + " and direction: " + getComputedStyle(targetElement)?.direction);
-
             if (targetElement && targetElement?.nodeName !== "LI") {
-                console.log("---------- targetElement is " + targetElement.nodeName + " and is not LI");
-
                 if (targetElement.parentElement.nodeName === "LI") {
                     // It still might be a list child.
-                    console.log("---------- Setting direction to inherit");
+                    // Setting direction to inherit");
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -137,20 +106,16 @@
                 }
 
                 if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr" && !force) {
-                    console.log("---------- not setting anything!");
+                    // Setting nothing!
                     return; 
-                } else /*if (getComputedStyle(targetElement)?.direction === "ltr" && style === "ltr")*/ {
-                    console.log("---------- Setting " + style);
+                } else {
                     targetElement.style.setProperty("direction", style);
                     targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left"); 
                 }
 
             } else if (targetElement && targetElement.nodeName === "LI" && listElements.has(targetElement.parentElement.nodeName)) {
-
-                // console.log("---------- parent is " + targetElement.parentElement.nodeName + " and direction is " + getComputedStyle(targetElement?.parentElement)?.direction);
-
                 if (style === "rtl") {
-                    // console.log("---------- Setting style rtl for the element and its parent");
+                    // Setting style rtl for the element and its parent
                     
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
@@ -160,7 +125,7 @@
                     targetElement.parentElement.style.setProperty("text-align", "right");
                     targetElement.parentElement.style.setProperty("padding-inline-end", "40px");
                 } else if (style === "ltr") {
-                    // console.log("---------- Setting style ltr just for the element");
+                    // Setting style ltr just for the element
                     targetElement.style.setProperty("direction", "inherit");
                     targetElement.style.setProperty("text-align", "inherit");
                     targetElement.style.setProperty("padding-inline-end", "40px");
@@ -173,56 +138,39 @@
             if (!rootElement) {
                 return;
             }
-            // console.log("---------- setDirection called for " + rootElement.nodeName);
             var textElements = rootElement.querySelectorAll(":not(:empty)");
 
             if (!textElements.length) {
-                // console.log(rootElement.nodeName + " has no children.");
+                // rootElement has no children. Empty tag.
                 return;
             }
 
             textElements.forEach(textElement => {
 
                 if (tagIgnore.has(textElement.nodeName)) {
-                    // console.log("--------- Ignoring tag " + textElement.nodeName);
+                    // Ignoring tag
                     return;
                 }
                 if (textElement.getAttribute("data-macro-name") === "code") {
-                    // console.log("--------- Code data-macro-name in table loop. Skipping");
+                    // Code data-macro-name in table loop. Skipping
                     return; // Skip this table
                 }
                 if (textElement.getAttribute("class")?.includes("code")) {
-                    // console.log("--------- Code table in textElements loop. Skipping");
+                    // Code table in textElements loop. Skipping
                     return; // This is a code block and skip it
                 }
                 if (textElement.nodeType === Node.ELEMENT_NODE) {
                     textElement.childNodes.forEach(child => {
                         if (child.nodeType === 3) { // Text Node
-                            // console.log("---------- Checking:");
-                            // console.log(child);
                             var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
-                            // console.log(firstChar);
-                            // if (firstChar && containsPersianChars(firstChar)) {
-                            // console.log("---------- child is " + child.nodeName + " and has the value: " + child.nodeValue.trim());
-                            // console.log(child.nodeValue);  // Logs the raw content
-                            // console.log([...child.nodeValue].map(c => c.charCodeAt(0).toString(16))); // Logs the character codes in hexadecimal
-                            // console.log("---------- comparison: " + child.nodeValue.trim() === '\u00A0');
-                            // console.log("---------- comparison: " + child.nodeValue.trim() === "&nbsp;");
-                            // console.log("---------- comparison: " + child.nodeValue.charCodeAt(0) === 0xA0);
 
-                            // if (child.nodeValue.charCodeAt(0) === 0xA0) { // It is a &nbsp or a space;
                             if (/^[\s\u00A0]$/.test(child.nodeValue) || !firstChar) { // It is all &nbsp, spaces or special characters;
-                                // console.log("---------- Returning, only spaces!");
                                 return;
                             }
 
                             if (containsPersianChars(child.nodeValue.trim())) {
-                                // console.log("---------- Setting RTL style for");
-                                // console.log(child);
                                 setStyle(textElement, "rtl");
                             } else {
-                                // console.log("---------- Setting LTR style for");
-                                // console.log(child);
                                 setStyle(textElement, "ltr");
                             }
                         }
@@ -232,14 +180,12 @@
 
             var tables = rootElement.querySelectorAll("table");
             tables.forEach((table) => {
-                // console.log("---------- Table:");
-                // console.log(table);
                 if (table.getAttribute("data-macro-name") === "code") {
-                    // console.log("--------- Code data-macro-name in table loop. Skipping");
+                    // Code data-macro-name in table loop. Skipping!
                     return; // Skip this table
                 }
                 if (table.querySelector("td.code")) {
-                    // console.log("--------- Code table in tables loop. Skipping");
+                    // Code table in tables loop. Skipping!
                     return; // Skip this table
                 }
 
@@ -250,11 +196,9 @@
                         if (persianDetected) {
                             return;
                         }
-                        // console.log("---------- Table Child:");
-                        // console.log(child);
                         child.childNodes.forEach(node => {
                             if (node.nodeType === Node.TEXT_NODE && containsPersianChars(node.nodeValue.trim())) {
-                                // console.log("---------- Table has Persian characters.");
+                                // Table has Persian characters.
                                 setStyle(table.parentElement, "rtl");
                                 persianDetected = true;
                                 return;
@@ -263,20 +207,6 @@
                     });
                 }
                 
-                /*var firstTh = table.querySelector("th:first-child");
-                if (firstTh) {
-                    console.log("---------- First TH:");
-                    console.log(firstTh);
-                    var firstChar = firstTh.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
-
-                    // if (firstChar && containsPersianChars(firstChar[0])) {
-                    if (firstChar && containsPersianChars(firstTh.textContent.trim())) {
-                        table.style.setProperty("direction", "rtl");
-                        table.style.setProperty("margin-left", "auto");
-                    } else {
-                        table.style.setProperty("direction", "ltr");
-                    }
-                }*/
             });
         }
 
@@ -295,15 +225,11 @@
                 // Observe changes inside iframe body
                 const iframeObserver = new MutationObserver(mutations => {
                     mutations.forEach(mutation => {
-                        // console.log("---------- Mutation on " + mutation.target.nodeName + " with parent " + mutation.target.parentElement.nodeName);
                         if (tagIgnore.has(mutation.target.parentElement?.nodeName)) {
-                            // console.log("---------- Ignoring." + mutation.target.nodeName);
                             return; // Ignore mutations on specified tags
                         }
-                        // console.log("---------- Mutation Type: " + mutation.type);
-                        // console.log("---------- Mutation Target: " + mutation.target.nodeName);
                         if (mutation.type === "characterData") {
-                            // console.log("Character data changed in:", mutation.target);
+                            // Character data changed in mutation.target
                             var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
                             if (firstChar && containsPersianChars(mutation.target.textContent.trim())) {
                                 setStyle(mutation.target.parentElement, "rtl", true);
@@ -312,10 +238,6 @@
                             }
                             
                         }
-                        /*if (mutation.type === "childList") {
-                            mutation.target.parentElement.style.removeProperty("direction");
-                            mutation.target.parentElement.style.removeProperty("text-align");
-                        }*/
                     });
                 });
 
@@ -333,7 +255,7 @@
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeName === "IFRAME") {
-                        console.log("---------- IFRAME Found!");
+                        // IFRAME Found!
                         handleIframe(node);
                     }
                 });
@@ -343,14 +265,7 @@
         function setDirectionForComments() {
             var commentContents = document.querySelectorAll(".comment-content");
             commentContents.forEach(element => {
-                // console.log("---------- Element:");
-                // console.log(element);
                 setDirection(element);
-                /*element.childNodes.forEach(child => {
-                    console.log("---------- Element child:");
-                    console.log(child);
-                    setDirection(child);
-                });*/
             });
         }
 
