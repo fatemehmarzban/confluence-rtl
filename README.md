@@ -26,7 +26,7 @@ This script automatically detects and sets the text direction (RTL or LTR) based
 
 ## Compatibility
 - Works with dynamic content updates, including TinyMCE editors and iframes.
-- Can be used in web applications where mixed Persian-English content is common.
+- This script is written specifically for Confluence v8.5.12
 
 ## License
 This script is open-source. Feel free to use, modify, and improve it as needed.
