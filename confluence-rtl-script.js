@@ -1,0 +1,242 @@
+<script>
+
+    const tagIgnore = new Set(["CODE", "SCRIPT", "PRE"]);
+    const inlineElements = new Set(["STRONG", "A"]);
+    const listElements = new Set(["UL", "OL"]);
+
+    function containsPersianChars(char) {
+        var persianRegex = /[\u0600-\u06FF\u0750-\u077F]/;
+        return persianRegex.test(char);
+    }
+
+    function findFirstNonInlineParent (element) {
+        // Returns the element itself if the element display is not inline or inline-block
+        var display = getComputedStyle(element)?.display;
+        var parent = element;
+        while (parent && (display === 'inline' || display === 'inline-block')) {
+            parent = parent.parentElement;
+            display = getComputedStyle(parent)?.display
+        }
+        return parent;
+    }
+
+    function setStyle(element, style, force = false) {
+        
+        var targetElement = element;
+
+        if (!targetElement) {
+            return;
+        }
+
+        if (element.getAttribute("data-mce-style")) {
+            // Remove tinemce style that interferes with our style.
+            element.removeAttribute("data-mce-style");
+        }
+
+        // Set style for inline elements
+        if (inlineElements.has(element.nodeName)) {
+
+            targetElement.style.setProperty("direction", style);
+            targetElement.style.setProperty("display", "inline-block");
+
+            setStyle(findFirstNonInlineParent(targetElement), style);
+
+            return;
+        }
+
+        var targetElementDisplay = getComputedStyle(targetElement)?.display;
+
+        targetElement = findFirstNonInlineParent(targetElement);
+
+        if (targetElement && targetElement?.nodeName !== "LI") {
+            if (targetElement.parentElement.nodeName === "LI") {
+                // It still might be a list child.
+                // Setting direction to inherit");
+                targetElement.style.setProperty("direction", "inherit");
+                targetElement.style.setProperty("text-align", "inherit");
+                targetElement.style.setProperty("padding-inline-end", "40px");
+                setStyle(targetElement.parentElement, style);
+                return;
+            }
+
+            if (getComputedStyle(targetElement)?.direction === "rtl" && style === "ltr" && !force) {
+                // Setting nothing!
+                return; 
+            } else {
+                targetElement.style.setProperty("direction", style);
+                targetElement.style.setProperty("text-align", style == "rtl" ? "right" : "left"); 
+            }
+
+        } else if (targetElement && targetElement.nodeName === "LI" && listElements.has(targetElement.parentElement.nodeName)) {
+            if (style === "rtl") {
+                // Setting style rtl for the element and its parent
+                
+                targetElement.style.setProperty("direction", "inherit");
+                targetElement.style.setProperty("text-align", "inherit");
+                targetElement.style.setProperty("padding-inline-end", "40px");
+
+                targetElement.parentElement.style.setProperty("direction", "rtl");
+                targetElement.parentElement.style.setProperty("text-align", "right");
+                targetElement.parentElement.style.setProperty("padding-inline-end", "40px");
+            } else if (style === "ltr") {
+                // Setting style ltr just for the element
+                targetElement.style.setProperty("direction", "inherit");
+                targetElement.style.setProperty("text-align", "inherit");
+                targetElement.style.setProperty("padding-inline-end", "40px");
+            }
+        }
+    }
+
+    function setDirection(rootElement) {
+
+        if (!rootElement) {
+            return;
+        }
+        var textElements = rootElement.querySelectorAll(":not(:empty)");
+
+        if (!textElements.length) {
+            // rootElement has no children. Empty tag.
+            return;
+        }
+
+        textElements.forEach(textElement => {
+
+            if (tagIgnore.has(textElement.nodeName)) {
+                // Ignoring tag
+                return;
+            }
+            if (textElement.getAttribute("data-macro-name") === "code") {
+                // Code data-macro-name in table loop. Skipping
+                return; // Skip this table
+            }
+            if (textElement.getAttribute("class")?.includes("code")) {
+                // Code table in textElements loop. Skipping
+                return; // This is a code block and skip it
+            }
+            if (textElement.nodeType === Node.ELEMENT_NODE) {
+                textElement.childNodes.forEach(child => {
+                    if (child.nodeType === 3) { // Text Node
+                        var firstChar = child.nodeValue.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
+
+                        if (/^[\s\u00A0]$/.test(child.nodeValue) || !firstChar) { // It is all &nbsp, spaces or special characters;
+                            return;
+                        }
+
+                        if (containsPersianChars(child.nodeValue.trim())) {
+                            setStyle(textElement, "rtl");
+                        } else {
+                            setStyle(textElement, "ltr");
+                        }
+                    }
+                });
+            }
+        });
+
+        var tables = rootElement.querySelectorAll("table");
+        tables.forEach((table) => {
+            if (table.getAttribute("data-macro-name") === "code") {
+                // Code data-macro-name in table loop. Skipping!
+                return; // Skip this table
+            }
+            if (table.querySelector("td.code")) {
+                // Code table in tables loop. Skipping!
+                return; // Skip this table
+            }
+
+            // If the table has a table-wrap div around it
+            if (table.parentElement && table.parentElement.classList.contains("table-wrap")) {
+                var persianDetected = false;
+                table.querySelectorAll("*").forEach(child => {
+                    if (persianDetected) {
+                        return;
+                    }
+                    child.childNodes.forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE && containsPersianChars(node.nodeValue.trim())) {
+                            // Table has Persian characters.
+                            setStyle(table.parentElement, "rtl");
+                            persianDetected = true;
+                            return;
+                        }
+                    });
+                });
+            }
+            
+        });
+    }
+
+    function handleIframe(iframe) {
+        iframe.addEventListener("load", function () {
+            var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+            var iframeBody = iframeDocument.querySelector("body");
+
+            if (!iframeDocument || !iframeBody) {
+                return;
+            }
+
+            // Apply styles initially
+            setDirection(iframeBody);
+
+            // Observe changes inside iframe body
+            const iframeObserver = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    if (tagIgnore.has(mutation.target.parentElement?.nodeName)) {
+                        return; // Ignore mutations on specified tags
+                    }
+                    if (mutation.type === "characterData") {
+                        // Character data changed in mutation.target
+                        var firstChar = mutation.target.textContent.trim().match(/[A-Za-z\u0600-\u06FF\u0750-\u077F]/);
+                        if (firstChar && containsPersianChars(mutation.target.textContent.trim())) {
+                            setStyle(mutation.target.parentElement, "rtl", true);
+                        } else {
+                            setStyle(mutation.target.parentElement, "ltr", true);
+                        }
+                        
+                    }
+                });
+            });
+
+            iframeObserver.observe(iframeBody, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+
+        });
+    }
+
+    // Observe DOM changes to detect edit mode and added iframe
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeName === "IFRAME") {
+                    // IFRAME Found!
+                    handleIframe(node);
+                }
+            });
+        });
+    });
+
+    function setDirectionForComments() {
+        var commentContents = document.querySelectorAll(".comment-content");
+        commentContents.forEach(element => {
+            setDirection(element);
+        });
+    }
+
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    var pageContent = document.querySelector("div#main-content");
+    var pageTitle = document.querySelector("#title-text");
+
+    window.onload = function () {
+        setTimeout(() => setDirection(pageContent), 700);
+        setDirection(pageTitle);
+        setDirection(pageContent);
+        setDirectionForComments();
+    };
+
+</script>
